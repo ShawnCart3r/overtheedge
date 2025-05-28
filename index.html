@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery</title>
+</head>
+<body>
+  <style>
+.grid-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: linear-gradient(to bottom, #fafafa, #f0f0f0);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.grid-gallery img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  cursor: pointer;
+}
+
+.grid-gallery img:hover {
+  transform: scale(1.05) rotate(0.5deg);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: scaleUp 0.4s ease;
+}
+
+.lightbox .close {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  font-size: 36px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.lightbox .nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 20px;
+  user-select: none;
+  font-weight: bold;
+}
+
+.lightbox .prev {
+  left: 10px;
+}
+
+.lightbox .next {
+  right: 10px;
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+  </style>
+  <h1 style="text-align: center; justify-content: center;"><strong>Over The Edge 2025</strong></h1>
+<div id="gallery" class="grid-gallery"></div>
+<div id="lightbox" class="lightbox">
+  <span class="close">&times;</span>
+  <span class="nav prev">&#10094;</span>
+  <img class="lightbox-img" id="lightbox-img" src="" alt="Expanded image">
+  <span class="nav next">&#10095;</span>
+</div>
+  <script>
+    const gallery = document.getElementById('gallery');
+  let loaded = 0;
+  const batchSize = 12;
+  const imagePaths = Array.from({ length: 315 }, (_, i) => `the-edge/2025-${i + 1}.jpg`);
+
+  function loadImages() {
+    const nextBatch = imagePaths.slice(loaded, loaded + batchSize);
+    nextBatch.forEach((src, index) => {
+      const img = new Image();
+      img.src = src;
+      img.loading = "lazy";
+      img.alt = `Photo ${loaded + index + 1}`;
+      img.onerror = () => {
+        console.warn(`Missing: ${src}`);
+        img.style.display = "none";
+      };
+      gallery.appendChild(img);
+    });
+    loaded += batchSize;
+  }
+
+  function handleScroll() {
+    const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+    if (nearBottom && loaded < imagePaths.length) {
+      loadImages();
+      setTimeout(checkScrollable, 50); // keep checking
+    }
+  }
+
+  function checkScrollable() {
+    const canScroll = document.body.scrollHeight > window.innerHeight;
+    if (!canScroll && loaded < imagePaths.length) {
+      loadImages();
+      setTimeout(checkScrollable, 50);
+    }
+  }
+
+  window.addEventListener('scroll', handleScroll);
+
+  // Initial load + force more until scroll appears
+  loadImages();
+  checkScrollable();
+  let currentIndex = 0;
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const closeBtn = document.querySelector('.lightbox .close');
+const nextBtn = document.querySelector('.lightbox .next');
+const prevBtn = document.querySelector('.lightbox .prev');
+
+// Open lightbox
+gallery.addEventListener('click', function (e) {
+  if (e.target.tagName === 'IMG') {
+    const src = e.target.src;
+    currentIndex = imagePaths.findIndex(path => src.includes(path));
+    showImage(currentIndex);
+  }
+});
+
+// Show image by index
+function showImage(index) {
+  if (index >= 0 && index < imagePaths.length) {
+    lightboxImg.src = imagePaths[index];
+    lightboxImg.alt = `Photo ${index + 1}`;
+    lightbox.style.display = 'flex';
+  }
+}
+
+// Navigate
+nextBtn.addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % imagePaths.length;
+  showImage(currentIndex);
+});
+
+prevBtn.addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + imagePaths.length) % imagePaths.length;
+  showImage(currentIndex);
+});
+
+// Close on background or close button
+closeBtn.addEventListener('click', () => lightbox.style.display = 'none');
+lightbox.addEventListener('click', (e) => {
+  if (e.target === lightbox) {
+    lightbox.style.display = 'none';
+  }
+});
+
+  </script>
+</body>
+</html>
